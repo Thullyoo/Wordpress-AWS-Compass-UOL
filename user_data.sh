@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "DB_URL=" > .env
+
 sudo yum update -y
 
 sudo yum install -y docker
