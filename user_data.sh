@@ -1,6 +1,6 @@
 #!/bin/bash
 
-yum update -y
+sudo yum update -y
 
 sudo yum install -y docker
 
@@ -16,8 +16,10 @@ sudo mkdir projeto-compass
  
 cd projeto-compass
 
+sudo yum install -y git
+
 sudo git clone https://github.com/Thullyoo/Compass-UOL-Projeto-2.git
 
 cd Compass-UOL-Projeto-2
 
-sudo docker compose up
+sudo docker-compose up
