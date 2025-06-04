@@ -13,7 +13,4 @@ services:
       WORDPRESS_DB_PASSWORD: wordpress
       WORDPRESS_DB_NAME: wordpress
     volumes:
-      - wordpress_data:/var/www/html
-
-volumes:
-  wordpress_data:
+      - /mnt/efs/wordpress:/var/www/html
