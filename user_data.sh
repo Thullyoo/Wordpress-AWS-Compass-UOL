@@ -1,22 +1,24 @@
 #!/bin/bash
 
+EFS_DNS=
+DB_URL=
+
 sudo yum update -y
 sudo yum install -y docker
 sudo yum install -y git
-
 sudo yum install -y nfs-utils
 
 sudo systemctl start docker
-sudo systemctl enable docker
 
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-cd / 
-
+cd /
 sudo mkdir -p /mnt/efs
+sudo mount -t nfs4 -o nfsvers=4.1 $EFS_DNS:/ /mnt/efs
 
-sudo mount -t nfs4 -o nfsvers=4.1 DNSAQUI:/ /mnt/efs
+sudo chown -R 33:33 /mnt/efs/wordpress
+sudo chmod -R 755 /mnt/efs/wordpress
 
 sudo docker volume create \
   --driver local \
@@ -27,11 +29,9 @@ sudo docker volume create \
 
 sudo mkdir projeto-compass
 cd projeto-compass
-
 sudo git clone https://github.com/Thullyoo/Compass-UOL-Projeto-2.git
 cd Compass-UOL-Projeto-2
 
-echo "DB_URL=seuendpointaqui" | sudo tee .env > /dev/null
+echo "DB_URL=$DB_URL" | sudo tee .env > /dev/null
 
 sudo docker-compose up -d
-
