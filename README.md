@@ -47,3 +47,42 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
   ![Imagem IGW](/images/vpc7.png)
 
 - **Verificação:** Com o IGW associado, a VPC estará configurada com acesso à internet, permitindo a comunicação externa necessária para o projeto.
+
+### Passo 2: Configuração e Criação das Subnets
+
+- **Objetivo:** Nesta etapa, criaremos quatro subnets (duas para o RDS e duas para as instâncias EC2) para garantir uma distribuição adequada e alta disponibilidade.
+
+- **Criação das Subnets para EC2:**
+
+  - Acesse o console da AWS, navegue até o serviço "VPC", vá para a aba "Subnets" e clique em "Create Subnet".
+
+    ![Imagem Subnet](/images/subnet1.png)
+
+  - Selecione a VPC criada no Passo 1 pelo nome. Escolha zonas de disponibilidade diferentes (ex.: us-east-1a e us-east-1b) para maximizar a redundância. Defina os blocos CIDR IPv4 (ex.: 10.0.0.0/18 e 10.0.64.0/18) e clique em "Create Subnet" para finalizar.
+
+    ![Imagem Subnet](/images/subnet2.png)
+    ![Imagem Subnet](/images/subnet3.png)
+
+- **Criação das Subnets para RDS:**
+
+  - Repita o processo de criação de subnets, alterando apenas o nome e os blocos CIDR (ex.: 10.0.128.0/18 e 10.0.192.0/18). Certifique-se de usar zonas de disponibilidade assim como foi feito para a subnet das EC2: us-east-1a e us-east-1b.
+
+    ![Imagem Subnet](/images/subnet4.png)
+    ![Imagem Subnet](/images/subnet5.png)
+
+- **Configuração das Route Tables:**
+
+  - Para permitir que as subnets do WordPress se conectem à internet, configure as tabelas de rotas. Acesse a aba "Route Tables" no console VPC e clique em "Create Route Table".
+
+    ![Imagem Subnet](/images/subnet6.png)
+
+  - Insira um nome para a tabela de rotas, selecione a VPC criada anteriormente e clique em "Create Route Table".
+
+    ![Imagem Subnet](/images/subnet7.png)
+
+  - Edite as rotas clicando em "Edit Routes". Adicione uma rota para redirecionar todo o tráfego (0.0.0.0/0) ao Internet Gateway (IGW) criado no Passo 1, selecione o IGW correspondente no campo "Target" e salve as alterações.
+
+    ![Imagem Subnet](/images/subnet8.png)
+    ![Imagem Subnet](/images/subnet9.png)
+
+- **Verificação:** Com isso, as quatro subnets estarão criadas (duas públicas para EC2 e duas privadas para RDS), e as tabelas de rotas estarão configuradas para acesso à internet.
