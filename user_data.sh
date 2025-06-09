@@ -15,10 +15,9 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 cd /
 sudo mkdir -p /mnt/efs
-sudo mount -t nfs4 -o nfsvers=4.1 $EFS_DNS:/ /mnt/efs
+sudo mount -t efs ${EFS_ID}:/ /mnt/efs
 
 sudo chown -R 33:33 /mnt/efs/wordpress
-sudo chmod -R 755 /mnt/efs/wordpress
 
 sudo docker volume create \
   --driver local \
