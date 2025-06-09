@@ -91,3 +91,73 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
     ![Image Subnet](/images/subnet11.png)
 
 - **Verificação:** Com isso, as quatro subnets estarão criadas (duas públicas para EC2 e duas privadas para RDS), e as tabelas de rotas estarão configuradas para acesso à internet.
+
+### Passo 3: Configuração e Criação do RDS
+
+- **Criação do Security Group para o RDS:** Inicie configurando um security group para o RDS. No console da AWS, pesquise por "Security Groups", clique em "Create Security Group" e forneça um nome, uma descrição e selecione a VPC criada anteriormente.
+
+  - ![Image Security Group](/images/rds1.png)
+
+- **Configuração das Regras de Entrada:** Na seção "Inbound Rules", clique em "Add Rule". Defina o "Type" como "Custom TCP", o "Port Range" como 3306 (padrão para MySQL), e permita todo o tráfego (Atenção: essa configuração será ajustada posteriormente para maior segurança!). Finalize clicando em "Create Security Group".
+
+  ![Image Security Group](/images/rds2.png)
+
+- **Criação do DB Subnet Group:** Para associar o RDS às subnets, acesse a aba "Subnet Groups" no serviço RDS e clique em "Create DB Subnet Group". Insira um nome e descrição, selecione a VPC criada, escolha duas zonas de disponibilidade (AZs) correspondentes às subnets previamente configuradas, selecione as subnets apropriadas e clique em "Create".
+
+  ![Image DB Security Group](/images/rds3.png)
+  ![Image DB Security Group](/images/rds4.png)
+
+- **Criação do Banco de Dados MySQL no RDS:** Navegue até a aba "Databases" no RDS e clique em "Create Database" para iniciar a configuração do banco de dados.
+
+  ![Image RDS](/images/rds5.png)
+
+- **Seleção da Engine:** Escolha a engine "MySQL" como base para o banco de dados.
+
+  ![Image DB](/images/rds6.png)
+
+- **Configuração do Template e Disponibilidade:** Opte pelo template "Free Tier" e selecione "Single AZ DB Instance Deployment" para esta configuração inicial.
+
+  ![Image DB](/images/rds7.png)
+
+- **Definição de Credenciais:** Insira um nome de identificação para a instância do DB, defina o "Master Username" e o "Master Password" como "wordpress" (recomenda-se usar senhas fortes em produção).
+
+  ![Image DB](/images/rds8.png)
+
+- **Associação de Rede:** Selecione a VPC criada, o DB Subnet Group configurado e o Security Group criado anteriormente.
+
+  ![Image DB](/images/rds9.png)
+
+- **Autenticação do Banco de Dados:** Configure a autenticação como "Password Authentication".
+
+  ![Image DB](/images/rds10.png)
+
+- **Criação do Banco Inicial:** Defina o nome do banco de dados inicial como "wordpress".
+
+  ![Image DB](/images/rds11.png)
+
+- **Verificação:** Com essas etapas concluídas, o banco de dados MySQL estará criado e configurado no RDS, pronto para uso com o WordPress.
+
+### Passo 4: Configuração e Criação do EFS
+
+- **Criação do Security Group para o EFS:** Comece configurando um security group dedicado ao EFS. No console da AWS, acesse "Security Groups", clique em "Create Security Group" e insira um nome, uma descrição e selecione a VPC criada anteriormente. Na seção "Inbound Rules", clique em "Add Rule", escolha o tipo "NFS", permita todo o tráfego definindo "0.0.0.0/0" como origem (Atenção: essa configuração será restrita posteriormente por motivos de segurança!), e finalize clicando em "Create Security Group".
+
+  ![Image EFS](/images/efs1.png)
+  ![Image EFS](/images/efs2.png)
+
+- **Criação do Sistema de Arquivos EFS:** Com o security group pronto, navegue até o serviço "EFS" no console da AWS e clique em "Create File System".
+
+  ![Image EFS](/images/efs3.png)
+
+- **Personalização da Configuração:** Selecione a opção "Customize" para ajustar as configurações manualmente.
+
+  ![Image EFS](/images/efs4.png)
+
+- **Definição do Nome:** Insira um nome para o sistema de arquivos e clique em "Next" para prosseguir.
+
+  ![Image EFS](/images/efs5.png)
+
+- **Configuração de Acesso à Rede:** Na seção "Network Access", selecione a VPC criada, adicione as subnets destinadas às EC2 configuradas anteriormente e associe o security group criado para o EFS. Revise as configurações e clique em "Next" até finalizar com "Create".
+
+  ![Image EFS](/images/efs6.png)
+
+- **Verificação:** Após a criação, o sistema de arquivos EFS estará configurado e pronto para ser utilizado pelo ambiente WordPress.
