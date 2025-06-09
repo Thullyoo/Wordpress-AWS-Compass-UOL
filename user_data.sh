@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EFS_DNS=
+EFS_ID=
 DB_URL=
 
 sudo yum update -y
