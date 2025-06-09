@@ -85,4 +85,9 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
     ![Imagem Subnet](/images/subnet8.png)
     ![Imagem Subnet](/images/subnet9.png)
 
+  - Após criar a tabela de rotas, associe-a às subnets das instâncias EC2 para garantir o acesso à internet. No console da AWS, na aba "Route Tables", selecione a tabela criada, clique em "Actions" e escolha "Edit Subnet Associations". Marque as duas subnets destinadas às EC2, verifique as seleções e clique em "Save Associations" para aplicar as alterações.
+
+    ![Imagem Subnet](/images/subnet10.png)
+    ![Image Subnet](/images/subnet11.png)
+
 - **Verificação:** Com isso, as quatro subnets estarão criadas (duas públicas para EC2 e duas privadas para RDS), e as tabelas de rotas estarão configuradas para acesso à internet.
