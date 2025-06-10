@@ -6,7 +6,7 @@ DB_URL=
 sudo yum update -y
 sudo yum install -y docker
 sudo yum install -y git
-sudo yum install -y nfs-utils
+sudo yum install -y amazon-efs-utils
 
 sudo systemctl start docker
 
