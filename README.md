@@ -142,3 +142,98 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
   ![Image EFS](/images/efs6.png)
 
 - **Verificação:** Após a criação, o sistema de arquivos EFS estará configurado e pronto para ser utilizado pelo ambiente WordPress.
+
+### Passo 5: Configuração e Criação do Target Groups
+
+- **Iniciando a Criação do Target Group:** Acesse o console da AWS, navegue até o serviço "Target Groups" (geralmente encontrado na seção do Load Balancer), e clique em "Create Target Group" para começar o processo.
+
+  - ![Image Tg](/images/tg1.png)
+
+- **Configuração do Target Group:** Escolha o tipo "Instances" como alvo, insira um nome descritivo para o target group, selecione a VPC criada no Passo 1 para garantir compatibilidade de rede, e clique em "Next". Revise as configurações e finalize clicando em "Create Target Group".
+
+  - ![Image Tg](/images/tg2.png)
+
+  - ![Image Tg](/images/tg3.png)
+
+- **Verificação:** Com isso, o target group estará criado e pronto para ser associado às instâncias EC2 criadas pelo Auto Scaling posteriormente, direcionando o tráfego de forma eficiente.
+
+### Passo 6: Configuração e Criação do Application Load Balancer
+
+- **Iniciando a Criação do Load Balancer:** Acesse o console da AWS, navegue até o serviço "Load Balancers", clique em "Create Load Balancer" e selecione a opção "Application Load Balancer" para iniciar o processo.
+
+  - ![Image ALB](/images/alb1.png)
+  - ![Image ALB](/images/alb2.png)
+
+- **Configuração Básica:** Insira um nome descritivo para o Application Load Balancer (ALB) e escolha a opção "Internet-facing" para permitir acesso público.
+
+  - ![Image ALB](/images/alb3.png)
+
+- **Definição de Rede:** Selecione a VPC criada anteriormente e adicione as subnets públicas correspondentes às zonas de disponibilidade us-east-1a e us-east-1b para garantir alta disponibilidade.
+
+  - ![Image ALB](/images/alb4.png)
+
+- **Configuração Final:** Associe o security group `alb-sgp` criado no Passo 2 e configure o listener para direcionar o tráfego ao target group criado no Passo 4. Revise as configurações e clique em "Create" para finalizar a criação do ALB.
+
+  - ![Image ALB](/images/alb5.png)
+
+- **Verificação:** Com isso, o Application Load Balancer estará configurado e pronto para distribuir o tráfego entre as instâncias EC2.
+
+### Passo 7: Configuração e Criação do Launch Template
+
+- **Iniciando a Criação do Launch Template:** Acesse o console da AWS, navegue até o serviço "EC2", vá para a aba "Launch Templates" e clique em "Create Launch Template" para começar o processo.
+
+  ![Image LT](/images/lt1.png)
+
+- **Configuração Básica:** Insira um nome descritivo para o launch template e selecione o sistema operacional "Amazon Linux 2023 AMI" como base para as instâncias EC2.
+
+  ![Image LT](/images/lt2.png)
+
+- **Associação do Security Group:** Escolha o security group `wordpress-sgp` criado no Passo 2 para garantir que as instâncias tenham as permissões de rede adequadas.
+
+  ![Image LT](/images/lt3.png)
+
+- **Configuração do User Data:** No campo "User Data", insira o script `user_data.sh`, substituindo `EFS_ID=` pelo ID do EFS criado no Passo 4 e `DB_URL=` pelo endpoint do RDS configurado no Passo 3. Isso permitirá que as instâncias se conectem ao EFS e ao banco de dados automaticamente. Logo após isso so clicar em Create Launch template para terminar a criação.
+
+  ![Image LT](/images/lt4.png)
+
+- **Verificação:** Com essas etapas concluídas, o launch template estará pronto para ser usado pelo grupo de auto scaling, garantindo a inicialização consistente das instâncias.
+
+### Passo 8: Configuração e Criação do Auto Scaling
+
+- **Iniciando a Criação do Auto Scaling Group:** Acesse o console da AWS, navegue até o serviço "EC2", localize a seção "Auto Scaling Groups" e clique em "Create Auto Scaling group" para iniciar o processo.
+
+  - ![Image ats](/images/ats.png)
+
+- **Configuração do Nome e Launch Template:** Insira um nome único para o grupo, e selecione o launch template criado no Passo 7. Escolha a versão padrão (1) para garantir a consistência das configurações das instâncias.
+
+  - ![Image ats](/images/ats2.png)
+
+- **Definição de Opções de Lançamento:** Na seção "Instance launch options", opte por "Specify instance attributes" para personalizar os requisitos de computação. Defina um mínimo de 1 vCPU e um máximo de 2 vCPUs, bem como um mínimo de 1 GiB e um máximo de 2 GiB de memória por instância, permitindo flexibilidade na seleção de tipos de instâncias.
+
+  - ![Image ats](/images/ats3.png)
+
+- **Integração com Load Balancer:** Na seção "Integrate with other services", escolha "Attach to an existing load balancer" e selecione o target group `tg-wordpress | HTTP` associado ao Application Load Balancer `alb-wordpress` criado no Passo 6, garantindo a distribuição de tráfego.
+
+  - ![Image ats](/images/ats4.png)
+
+- **Configuração da Rede:** Selecione a VPC criada no Passo 1 e configure as subnets privadas `wp-subnet-private-us-east-1a` e `wp-subnet-private-us-east-1b` para hospedar as instâncias. Escolha a opção "Balanced distribution across Availability Zones" para alta disponibilidade.
+
+  - ![Image ats](/images/ats5.png)
+
+- **Definição de Tamanho e Escalabilidade:** Na seção "Configure group size and scaling", defina a capacidade desejada como 2 instâncias, com um mínimo de 2 e um máximo de 4 instâncias. Opte por "No scaling policies" inicialmente, permitindo ajustes manuais ou automáticos futuros conforme a demanda.
+
+  - ![Image ats](/images/ats6.png)
+
+- **Verificação e Criação:** Revise todas as configurações e clique em "Create Auto Scaling group" para finalizar. O grupo estará pronto para lançar instâncias automaticamente com base nas políticas definidas.
+
+### Passo 9: Testes
+
+- **Acesso ao Load Balancer:** Acesse o console da AWS, navegue até o serviço "Load Balancers", localize o Application Load Balancer criado no Passo 6 e copie o DNS name associado a ele para testar a conectividade.
+
+  - ![](/images/ats8.png)
+
+- **Teste no Navegador:** Cole o DNS name copiado na barra de endereço de um navegador e pressione Enter. Isso deve exibir a tela de instalação inicial do WordPress, indicando que a infraestrutura está funcionando corretamente.
+
+  - ![](/images/ats7.png)
+
+- **Verificação:** Confirme que a página de instalação do WordPress aparece sem erros, sinalizando que o ALB, as instâncias EC2, o EFS e o RDS estão devidamente integrados e acessíveis.
