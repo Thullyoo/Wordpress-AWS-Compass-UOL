@@ -27,82 +27,68 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
 
 ### Passo 1: Configuração e Criação da VPC
 
-- **Iniciando a Criação da VPC:** A VPC será a estrutura principal do projeto, responsável por isolar e gerenciar a rede. Acesse o console da AWS, navegue até o serviço "VPC" e clique em "Create VPC".
+- **Iniciando a Criação da VPC:** A VPC será a base fundamental do projeto, responsável por isolar e gerenciar a rede de forma segura. Acesse o console da AWS, navegue até o serviço "VPC" e clique em "Create VPC" para iniciar o processo.
 
   ![Imagem VPC](/images/vpc1.png)
   ![Imagem VPC](/images/vpc2.png)
 
-- **Ação de Criação:** Na tela de criação, insira as informações necessárias, como o nome da VPC e o bloco CIDR IPv4 (ex.: 10.0.0.0/16). Revise os detalhes e clique em "Create VPC" para finalizar.
+- **Configuração Inicial:** Na tela de criação, selecione a opção "VPC and more" para uma configuração completa. Defina um nome desejado para a VPC, utilize o bloco CIDR IPv4 como 10.0.0.0/16 por padrão, e configure "Number of Availability Zones" como 2, escolhendo us-east-1a e us-east-1b para garantir redundância.
 
   ![Imagem VPC](/images/vpc3.png)
 
-- **Criação e Associação de um Internet Gateway (IGW):** Para permitir a saída de tráfego da VPC para a internet, crie um Internet Gateway. Vá até a seção "Internet Gateways", clique em "Create Internet Gateway" e forneça um nome.
+- **Definição de Subnets e Recursos:** Escolha 2 subnets públicas (para o ALB) e 2 subnets privadas (para EC2 e RDS), adicione 1 NAT Gateway por zona de disponibilidade para acesso à internet das subnets privadas, e deixe "VPC Endpoints" como "None". Ative as opções "Enable DNS Hostnames" e "DNS Resolution" para suporte a resolução de nomes. Finalize clicando em "Create VPC" para concluir a criação.
 
   ![Imagem IGW](/images/vpc4.png)
+
+- **Verificação da Estrutura:** Após a criação, a VPC estará configurada com 2 subnets privadas (para EC2 e RDS), 2 subnets públicas (para o ALB), 2 NAT Gateways e 1 Internet Gateway (IGW), formando uma infraestrutura robusta e escalável.
+
   ![Imagem IGW](/images/vpc5.png)
 
-- **Associação do IGW à VPC:** Após criar o IGW, selecione-o na lista, clique em "Actions" e escolha "Attach to VPC". No campo "Select a VPC", escolha a VPC criada anteriormente e clique em "Attach Internet Gateway".
+### Passo 2: Configuração e Criação das Security Groups
 
-  ![Imagem IGW](/images/vpc6.png)
-  ![Imagem IGW](/images/vpc7.png)
+- **Criação Inicial das Security Groups:** Neste passo, criaremos os security groups necessários para o projeto. Acesse o console da AWS, navegue até "Security Groups", e clique em "Create Security Group" para criar quatro grupos sem regras iniciais. Nomeie-os de forma descritiva (ex.: `wordpress-sgp`, `efs-sgp`, `rds-sgp`, `alb-sgp`) para refletir suas funções (WordPress, EFS, RDS e ALB, respectivamente). Selecione a VPC criada no Passo 1 e finalize a criação de cada um.
 
-- **Verificação:** Com o IGW associado, a VPC estará configurada com acesso à internet, permitindo a comunicação externa necessária para o projeto.
+  - ![Imagem Security Group](/images/sgp1.png)
 
-### Passo 2: Configuração e Criação das Subnets
+- **Configuração do Security Group `wordpress-sgp`:** Selecione o `wordpress-sgp`, clique em "Actions" e escolha "Edit Inbound Rules". Adicione uma regra do tipo "HTTP" com origem `alb-sgp` e outra do tipo "NFS" com origem `efs-sgp`. Salve as alterações. Em seguida, vá para "Outbound Rules", clique em "Add Rule" e deixe as regras padrão (permitindo todo o tráfego, a ser ajustado conforme necessário).
 
-- **Objetivo:** Nesta etapa, criaremos quatro subnets (duas para o RDS e duas para as instâncias EC2) para garantir uma distribuição adequada e alta disponibilidade.
+  - ![Imagem Security Group](/images/sgp2.png)
+  - ![Imagem Security Group](/images/sgp5.png)
+  - ![Imagem Security Group](/images/sgp3.png)
+  - ![Imagem Security Group](/images/sgp4.png)
 
-- **Criação das Subnets para EC2:**
+- **Configuração do Security Group `rds-sgp`:** Selecione o `rds-sgp`, edite as "Inbound Rules" e adicione uma regra do tipo "MySQL/Aurora" com origem `wordpress-sgp`. Nas "Outbound Rules", adicione a mesma regra ("MySQL/Aurora" com origem `wordpress-sgp`) para garantir a comunicação bidirecional.
 
-  - Acesse o console da AWS, navegue até o serviço "VPC", vá para a aba "Subnets" e clique em "Create Subnet".
+  - ![Image Security Group](/images/sgp6.png)
+  - ![Image Security Group](/images/sgp7.png)
 
-    ![Imagem Subnet](/images/subnet1.png)
+- **Configuração do Security Group `alb-sgp`:** Selecione o `alb-sgp`, edite as "Inbound Rules" e adicione uma regra do tipo "HTTP" permitindo tráfego de qualquer origem (0.0.0.0/0) para acesso público. Nas "Outbound Rules", adicione uma regra do tipo "HTTP" com origem `wordpress-sgp`.
 
-  - Selecione a VPC criada no Passo 1 pelo nome. Escolha zonas de disponibilidade diferentes (ex.: us-east-1a e us-east-1b) para maximizar a redundância. Defina os blocos CIDR IPv4 (ex.: 10.0.0.0/18 e 10.0.64.0/18) e clique em "Create Subnet" para finalizar.
+  - ![Image Security Group](/images/sgp8.png)
+  - ![Image Security Group](/images/sgp9.png)
 
-    ![Imagem Subnet](/images/subnet2.png)
-    ![Imagem Subnet](/images/subnet3.png)
+- **Configuração do Security Group `efs-sgp`:** Selecione o `efs-sgp`, edite as "Inbound Rules" e adicione uma regra do tipo "NFS" com origem `wordpress-sgp`. Nas "Outbound Rules", adicione uma regra do tipo "NFS" com origem `wordpress-sgp` para limitar o tráfego ao necessário.
 
-- **Criação das Subnets para RDS:**
+  - ![Image Security Group](/images/sgp10.png)
+  - ![Image Security Group](/images/sgp11.png)
 
-  - Repita o processo de criação de subnets, alterando apenas o nome e os blocos CIDR (ex.: 10.0.128.0/18 e 10.0.192.0/18). Certifique-se de usar zonas de disponibilidade assim como foi feito para a subnet das EC2: us-east-1a e us-east-1b.
+- **Verificação:** Com essas configurações, os quatro security groups estarão prontos para suportar a infraestrutura. Abaixo está uma tabela resumindo as configurações de inbound e outbound:
 
-    ![Imagem Subnet](/images/subnet4.png)
-    ![Imagem Subnet](/images/subnet5.png)
-
-- **Configuração das Route Tables:**
-
-  - Para permitir que as subnets do WordPress se conectem à internet, configure as tabelas de rotas. Acesse a aba "Route Tables" no console VPC e clique em "Create Route Table".
-
-    ![Imagem Subnet](/images/subnet6.png)
-
-  - Insira um nome para a tabela de rotas, selecione a VPC criada anteriormente e clique em "Create Route Table".
-
-    ![Imagem Subnet](/images/subnet7.png)
-
-  - Edite as rotas clicando em "Edit Routes". Adicione uma rota para redirecionar todo o tráfego (0.0.0.0/0) ao Internet Gateway (IGW) criado no Passo 1, selecione o IGW correspondente no campo "Target" e salve as alterações.
-
-    ![Imagem Subnet](/images/subnet8.png)
-    ![Imagem Subnet](/images/subnet9.png)
-
-  - Após criar a tabela de rotas, associe-a às subnets das instâncias EC2 para garantir o acesso à internet. No console da AWS, na aba "Route Tables", selecione a tabela criada, clique em "Actions" e escolha "Edit Subnet Associations". Marque as duas subnets destinadas às EC2, verifique as seleções e clique em "Save Associations" para aplicar as alterações.
-
-    ![Imagem Subnet](/images/subnet10.png)
-    ![Image Subnet](/images/subnet11.png)
-
-- **Verificação:** Com isso, as quatro subnets estarão criadas (duas públicas para EC2 e duas privadas para RDS), e as tabelas de rotas estarão configuradas para acesso à internet.
+| Security Group  | Direção  | Protocolo    | Porta | Origem/Destino   |
+| --------------- | -------- | ------------ | ----- | ---------------- |
+| `wordpress-sgp` | Inbound  | HTTP         | 80    | `alb-sgp`        |
+| `wordpress-sgp` | Inbound  | NFS          | 2049  | `efs-sgp`        |
+| `wordpress-sgp` | Outbound | (Padrão)     | -     | (Todo o tráfego) |
+| `rds-sgp`       | Inbound  | MySQL/Aurora | 3306  | `wordpress-sgp`  |
+| `rds-sgp`       | Outbound | MySQL/Aurora | 3306  | `wordpress-sgp`  |
+| `alb-sgp`       | Inbound  | HTTP         | 80    | 0.0.0.0/0        |
+| `alb-sgp`       | Outbound | HTTP         | 80    | `wordpress-sgp`  |
+| `efs-sgp`       | Inbound  | NFS          | 2049  | `wordpress-sgp`  |
+| `efs-sgp`       | Outbound | NFS          | 2049  | `wordpress-sgp`  |
 
 ### Passo 3: Configuração e Criação do RDS
 
-- **Criação do Security Group para o RDS:** Inicie configurando um security group para o RDS. No console da AWS, pesquise por "Security Groups", clique em "Create Security Group" e forneça um nome, uma descrição e selecione a VPC criada anteriormente.
-
-  - ![Image Security Group](/images/rds1.png)
-
-- **Configuração das Regras de Entrada:** Na seção "Inbound Rules", clique em "Add Rule". Defina o "Type" como "Custom TCP", o "Port Range" como 3306 (padrão para MySQL), e permita todo o tráfego (Atenção: essa configuração será ajustada posteriormente para maior segurança!). Finalize clicando em "Create Security Group".
-
-  ![Image Security Group](/images/rds2.png)
-
-- **Criação do DB Subnet Group:** Para associar o RDS às subnets, acesse a aba "Subnet Groups" no serviço RDS e clique em "Create DB Subnet Group". Insira um nome e descrição, selecione a VPC criada, escolha duas zonas de disponibilidade (AZs) correspondentes às subnets previamente configuradas, selecione as subnets apropriadas e clique em "Create".
+- **Criação do DB Subnet Group:** Para associar o RDS às subnets, acesse a aba "Subnet Groups" no serviço RDS e clique em "Create DB Subnet Group". Insira um nome e descrição, selecione a VPC criada, escolha duas zonas de disponibilidade (AZs) correspondentes às subnets previamente configuradas, selecione as subnets privadas e clique em "Create".
 
   ![Image DB Security Group](/images/rds3.png)
   ![Image DB Security Group](/images/rds4.png)
@@ -138,11 +124,6 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
 - **Verificação:** Com essas etapas concluídas, o banco de dados MySQL estará criado e configurado no RDS, pronto para uso com o WordPress.
 
 ### Passo 4: Configuração e Criação do EFS
-
-- **Criação do Security Group para o EFS:** Comece configurando um security group dedicado ao EFS. No console da AWS, acesse "Security Groups", clique em "Create Security Group" e insira um nome, uma descrição e selecione a VPC criada anteriormente. Na seção "Inbound Rules", clique em "Add Rule", escolha o tipo "NFS", permita todo o tráfego definindo "0.0.0.0/0" como origem (Atenção: essa configuração será restrita posteriormente por motivos de segurança!), e finalize clicando em "Create Security Group".
-
-  ![Image EFS](/images/efs1.png)
-  ![Image EFS](/images/efs2.png)
 
 - **Criação do Sistema de Arquivos EFS:** Com o security group pronto, navegue até o serviço "EFS" no console da AWS e clique em "Create File System".
 
