@@ -13,6 +13,8 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
 - **Grupo de Auto Scaling:** Ajusta automaticamente o número de instâncias EC2 com base nas políticas de escalabilidade definidas para gerenciar picos de tráfego.
 - **Amazon RDS:** Um serviço de banco de dados relacional gerenciado (RDS) armazena o banco de dados do WordPress, garantindo persistência e escalabilidade dos dados.
 
+![Imagem arquitetura](/images/arquitetura.png)
+
 ## Uso
 
 - Os usuários acessam o site WordPress através da URL do balanceador de carga.
