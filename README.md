@@ -198,6 +198,75 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
 
   ![Image LT](/images/lt4.png)
 
+- Explicação do user_data.sh
+
+```
+#!/bin/bash
+# Define que o script será executado com o interpretador bash
+
+EFS_ID=
+DB_URL=
+# Variáveis que devem ser preenchidas com o ID do EFS e a URL do banco de dados
+
+sudo yum update -y
+# Atualiza todos os pacotes da máquina
+
+sudo yum install -y docker
+# Instala o Docker
+
+sudo yum install -y git
+# Instala o Git
+
+sudo yum install -y amazon-efs-utils
+# Instala utilitários para montar sistemas de arquivos EFS
+
+sudo systemctl start docker
+# Inicia o serviço do Docker
+
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+# Baixa o Docker Compose na versão mais recente compatível com o sistema
+
+sudo chmod +x /usr/local/bin/docker-compose
+# Dá permissão de execução ao Docker Compose
+
+cd /
+sudo mkdir -p /mnt/efs
+# Cria o diretório onde o EFS será montado
+
+sudo mount -t efs ${EFS_ID}:/ /mnt/efs
+# Monta o EFS no diretório criado
+
+sudo mkdir -p /mnt/efs/wordpress
+# Cria um subdiretório para os dados do WordPress
+
+sudo chown -R 33:33 /mnt/efs/wordpress
+# Altera a propriedade da pasta para o usuário do WordPress (UID e GID 33)
+
+sudo docker volume create \
+  --driver local \
+  --opt type=none \
+  --opt device=/mnt/efs/wordpress \
+  --opt o=bind \
+  wp-efs
+# Cria um volume Docker vinculado ao diretório montado do EFS
+
+sudo mkdir projeto-compass
+cd projeto-compass
+# Cria e entra no diretório do projeto
+
+sudo git clone https://github.com/Thullyoo/Wordpress-AWS-Compass-UOL.git
+# Clona o repositório do projeto WordPress
+
+cd Wordpress-AWS-Compass-UOL
+# Entra na pasta do repositório
+
+echo "DB_URL=$DB_URL" | sudo tee .env > /dev/null
+# Cria o arquivo .env com a variável de ambiente do banco de dados
+
+sudo docker-compose up -d
+# Sobe os containers definidos no docker-compose em modo detach (em segundo plano)
+```
+
 - **Verificação:** Com essas etapas concluídas, o launch template estará pronto para ser usado pelo grupo de auto scaling, garantindo a inicialização consistente das instâncias.
 
 ### Passo 8: Configuração e Criação do Auto Scaling
