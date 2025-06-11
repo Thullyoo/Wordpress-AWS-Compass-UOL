@@ -29,7 +29,7 @@ sudo docker volume create \
 sudo mkdir projeto-compass
 cd projeto-compass
 sudo git clone https://github.com/Thullyoo/Wordpress-AWS-Compass-UOL.git
-cd Compass-UOL-Projeto-2
+cd Wordpress-AWS-Compass-UOL
 
 echo "DB_URL=$DB_URL" | sudo tee .env > /dev/null
 
