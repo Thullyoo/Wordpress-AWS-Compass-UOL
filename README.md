@@ -239,3 +239,7 @@ Este projeto descreve uma arquitetura de implantação escalável do WordPress n
   - ![](/images/ats7.png)
 
 - **Verificação:** Confirme que a página de instalação do WordPress aparece sem erros, sinalizando que o ALB, as instâncias EC2, o EFS e o RDS estão devidamente integrados e acessíveis.
+
+- Imagem com o site customizado:
+
+  - ![](/images/ats9.png)
